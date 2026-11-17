@@ -10,3 +10,12 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+def verifier_prix(prix: float) -> bool:
+    """
+    Vérifie qu'un prix est valide.
+
+    Un prix doit être positif ou égal à zéro.
+    """
+    return prix >= 0

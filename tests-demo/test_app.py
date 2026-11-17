@@ -1,4 +1,4 @@
-from app import calculer_total, main
+from app import calculer_total, main, verifier_prix
 
 
 def test_calcul_total():
@@ -26,3 +26,15 @@ def test_main_affiche_total(capsys):
 
 
 # capsys est une fonctionnalité de Pytest qui permet de récupérer ce qu'un programme affiche dans le terminal
+
+
+def test_verifier_prix_positif():
+    assert verifier_prix(1000) is True
+
+
+def test_verifier_prix_zero():
+    assert verifier_prix(0) is True
+
+
+def test_verifier_prix_negatif():
+    assert verifier_prix(-100) is False
