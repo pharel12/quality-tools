@@ -1,0 +1,71 @@
+
+# Pipeline CI/CD du projet DevOps Quality
+
+image: python:3.11-slim
+
+stages:
+  - lint
+  - format
+  - security
+  - test
+  - audit
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+default:
+  before_script:
+    - python --version
+    - python -m pip install --upgrade pip
+    - python -m pip install -r requirements.txt
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key:
+    files:
+      - requirements.txt
+  paths:
+    - .cache/pip/
+
+# 1. Analyse statique avec Ruff
+ruff:
+  stage: lint
+  script:
+    - python -m ruff check tests-demo/
+
+# 2. Verification du formatage avec Black
+black:
+  stage: format
+  script:
+    - python -m black --check tests-demo/
+
+# 3. Analyse de securite avec Bandit
+bandit:
+  stage: security
+  script:
+    - python -m bandit -r tests-demo/ -x "*/test_*.py"
+
+# 4. Tests automatises et couverture
+pytest:
+  stage: test
+  script:
+    - python -m pytest tests-demo/ --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
+  coverage: '/TOTAL\s+\d+\s+\d+\s+(\d+%)/'
+  artifacts:
+    when: always
+    paths:
+      - coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+# 5. Audit des dependances
+pip-audit:
+  stage: audit
+  script:
+    - python -m pip_audit -r requirements.txt
