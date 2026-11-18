@@ -1,0 +1,114 @@
+
+name: DevOps Quality Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - staging
+      - "feature/**"
+
+  pull_request:
+    branches:
+      - main
+      - develop
+      - staging
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  ruff:
+    name: Analyse statique - Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: python -m pip install -r requirements.txt
+
+      - name: Executer Ruff
+        run: python -m ruff check tests-demo/
+
+  black:
+    name: Formatage - Black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: python -m pip install -r requirements.txt
+
+      - name: Verifier le formatage
+        run: python -m black --check tests-demo/
+
+  bandit:
+    name: Securite - Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: python -m pip install -r requirements.txt
+
+      - name: Analyser la securite
+        run: python -m bandit -r tests-demo/ -x "*/test_*.py"
+
+  pytest:
+    name: Tests - Pytest et couverture
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: python -m pip install -r requirements.txt
+
+      - name: Executer les tests
+        run: >
+          python -m pytest tests-demo/
+          --cov=app
+          --cov-report=term-missing
+          --cov-fail-under=80
+
+  pip-audit:
+    name: Audit des dependances
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Installer les dependances
+        run: python -m pip install -r requirements.txt
+
+      - name: Verifier les vulnerabilites
+        run: python -m pip_audit -r requirements.txt
